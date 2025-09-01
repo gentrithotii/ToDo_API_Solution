@@ -2,7 +2,9 @@ package se.lexicon.todo_app.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import se.lexicon.todo_app.dto.AttachmentDto;
 import se.lexicon.todo_app.dto.TodoDto;
+import se.lexicon.todo_app.entity.Attachment;
 import se.lexicon.todo_app.entity.Person;
 import se.lexicon.todo_app.entity.Todo;
 import se.lexicon.todo_app.repository.PersonRepository;
@@ -25,6 +27,15 @@ public class TodoServiceImpl implements TodoService {
     }
 
     private TodoDto convertToDto(Todo todo) {
+        List<AttachmentDto> attachmentDtos = todo.getAttachments().stream()
+                .map(attachment -> new AttachmentDto(
+                        attachment.getId(),
+                        attachment.getFileName(),
+                        attachment.getFileType(),
+                        attachment.getData()
+                ))
+                .collect(Collectors.toList());
+
         return TodoDto.builder()
                 .id(todo.getId())
                 .title(todo.getTitle())
@@ -35,8 +46,10 @@ public class TodoServiceImpl implements TodoService {
                 .dueDate(todo.getDueDate())
                 .personId(todo.getPerson() != null ? todo.getPerson().getId() : null)
                 .numberOfAttachments(todo.getAttachments().size())
+                .attachments(attachmentDtos)
                 .build();
     }
+
 
     private Todo convertToEntity(TodoDto todoDto) {
         Todo todo = new Todo(
@@ -45,13 +58,25 @@ public class TodoServiceImpl implements TodoService {
                 todoDto.completed(),
                 todoDto.dueDate()
         );
-        
+
         if (todoDto.personId() != null) {
             Person person = personRepository.findById(todoDto.personId())
                     .orElseThrow(() -> new RuntimeException("Person not found"));
             todo.setPerson(person);
         }
-        
+
+        // Add attachments if present
+        if (todoDto.attachments() != null && !todoDto.attachments().isEmpty()) {
+            for (AttachmentDto attachmentDto : todoDto.attachments()) {
+                Attachment attachment = new Attachment(
+                        attachmentDto.fileName(),
+                        attachmentDto.fileType(),
+                        attachmentDto.data()
+                );
+                todo.addAttachment(attachment);
+            }
+        }
+
         return todo;
     }
 
@@ -80,12 +105,12 @@ public class TodoServiceImpl implements TodoService {
     public TodoDto update(Long id, TodoDto todoDto) {
         Todo existingTodo = todoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Todo not found"));
-        
+
         existingTodo.setTitle(todoDto.title());
         existingTodo.setDescription(todoDto.description());
         existingTodo.setCompleted(todoDto.completed());
         existingTodo.setDueDate(todoDto.dueDate());
-        
+
         if (todoDto.personId() != null) {
             Person person = personRepository.findById(todoDto.personId())
                     .orElseThrow(() -> new RuntimeException("Person not found"));
@@ -93,7 +118,23 @@ public class TodoServiceImpl implements TodoService {
         } else {
             existingTodo.setPerson(null);
         }
-        
+
+        // Handle attachments
+        if (todoDto.attachments() != null && !todoDto.attachments().isEmpty()) {
+            // Clear existing attachments
+            existingTodo.getAttachments().clear();
+
+            // Add new attachments
+            for (AttachmentDto attachmentDto : todoDto.attachments()) {
+                Attachment attachment = new Attachment(
+                        attachmentDto.fileName(),
+                        attachmentDto.fileType(),
+                        attachmentDto.data()
+                );
+                existingTodo.addAttachment(attachment);
+            }
+        }
+
         Todo updatedTodo = todoRepository.save(existingTodo);
         return convertToDto(updatedTodo);
     }

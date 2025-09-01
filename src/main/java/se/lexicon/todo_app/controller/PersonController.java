@@ -34,8 +34,8 @@ public class PersonController {
         this.personService = personService;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping // What is GetMapping?
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping
     @ResponseStatus(HttpStatus.OK) // 200 OK
     public List<PersonDto> getPerson() {
         System.out.println("Fetching all persons");

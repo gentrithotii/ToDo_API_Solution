@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Builder
 public record TodoDto(
@@ -27,7 +28,22 @@ public record TodoDto(
 
         Long personId,
 
-        int numberOfAttachments
-) {}
+        int numberOfAttachments,
+
+        List<AttachmentDto> attachments
+
+) {
+
+        public TodoDto withAttachments(List<AttachmentDto> newAttachments) {
+                return new TodoDto(
+                        id, title, description, completed,
+                        createdAt, updatedAt, dueDate, personId,
+                        newAttachments != null ? newAttachments.size() : 0,
+                        newAttachments
+                );
+        }
+
+
+}
 
 
