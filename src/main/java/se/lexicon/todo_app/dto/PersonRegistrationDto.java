@@ -2,6 +2,9 @@ package se.lexicon.todo_app.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.Builder;
+import se.lexicon.todo_app.entity.Role;
+
+import java.util.Set;
 
 @Builder
 public record PersonRegistrationDto(
@@ -16,7 +19,7 @@ public record PersonRegistrationDto(
 
     @NotBlank(message = "Username is required")
     @Size(min = 4, max = 50, message = "Username must be between 4 and 50 characters")
-    @Pattern(regexp = "^[a-zA-Z0-9._-]{4,50}$", 
+    @Pattern(regexp = "^[a-zA-Z0-9._-]{4,50}$",
             message = "Username can only contain letters, numbers, dots, underscores, and hyphens")
     String username,
 
@@ -27,9 +30,12 @@ public record PersonRegistrationDto(
     String password,
 
     @NotBlank(message = "Password confirmation is required")
-    String confirmPassword
+    String confirmPassword,
+    @NotBlank(message = "Role cannot be empty")
+    String userRole
 ) {
     // Custom validation method
+
     @AssertTrue(message = "Passwords do not match")
     boolean isPasswordMatching() {
         return password != null && password.equals(confirmPassword);

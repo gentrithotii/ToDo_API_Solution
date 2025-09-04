@@ -12,6 +12,7 @@ import se.lexicon.todo_app.repository.PersonRepository;
 import se.lexicon.todo_app.repository.UserRepository;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -61,7 +62,14 @@ public class PersonServiceImpl implements PersonService {
         User user = new User();
         user.setUsername(dto.username());
         user.setPassword(passwordEncoder.encode(dto.password())); // Use the actual password from DTO
-        user.addRole(Role.USER);
+        switch (dto.userRole()) {
+            case "ADMIN" -> {
+                user.addRole(Role.ADMIN);
+                user.addRole(Role.USER);
+            }
+            case "USER" -> user.addRole(Role.USER);
+            case "MODERATOR" -> user.addRole(Role.MODERATOR);
+        }
 
         // Create Person and establish bidirectional relationship
         Person person = new Person(dto.name(), dto.email());
